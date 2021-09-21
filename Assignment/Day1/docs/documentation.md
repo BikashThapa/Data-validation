@@ -189,3 +189,4 @@ AND shift_type <> 'Night';
 | 0 | passed |
 
 Here, we are checking the shift_start time that has been provided by extracting from timesheet_raw dataset. If the shift start date is between 17:00:00 and 06:00:00 then we call them as night shift.Then we are followed by shift type check as not Night.
+
