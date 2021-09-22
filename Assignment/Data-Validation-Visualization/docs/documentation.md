@@ -5,17 +5,19 @@
  - 1.Check if a single employee is listed twice with multiple ids.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM(
-SELECT COUNT(*)
-FROM employee
-GROUP BY client_employee_id
-HAVING COUNT(*) >1
-) as test_result;
+  SELECT 
+    COUNT(*)
+  FROM employee
+  GROUP BY client_employee_id
+  HAVING COUNT(*) >1
+  ) as test_result;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -26,14 +28,15 @@ Here we have checking for the single employee is listed twice with multiple id. 
 - 2. Check if part time employees are assigned other fte_status.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+ END AS test_result
 FROM employee
 WHERE fte >= 0.8 
-AND fte_status = 'Part Time';
+  AND fte_status = 'Part Time';
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -44,14 +47,15 @@ Here, we have checking if part time employees are assigned other fte_status. We 
 - 3. Check if termed employees are marked as active.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM employee
-WHERE term_reason IS  NOT NULL 
-AND is_active IS TRUE;
+WHERE term_date IS  NOT NULL 
+  AND is_active IS TRUE;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -62,17 +66,19 @@ Here, term_reason is checked whether it is not null or not and is_active status 
 - 4. Check if the same product is listed more than once in a single bill.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM (
-SELECT COUNT(product_id) as count
-FROM sales
-GROUP BY product_id, bill_no
-HAVING COUNT(product_id) > 1
-) AS test_results;
+  SELECT 
+    COUNT(product_id) as count
+  FROM sales
+  GROUP BY product_id, bill_no
+  HAVING COUNT(*) > 1
+  ) AS test_results;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -83,16 +89,19 @@ Here, we have listed the data using group by product_id and bill_no as a one and
 - 5. Check if the customer_id in the sales table does not exist in the customer table.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM (
-SELECT customer_id FROM sales
-EXCEPT
-SELECT customer_id FROM customer
-) as test_results;
+  SELECT DISTINCT customer_id
+   FROM sales
+  EXCEPT
+  SELECT DISTINCT customer_id
+   FROM customer
+  ) as test_results;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -103,14 +112,15 @@ Here, we are using Except keyword returns the distinct rows automatically from s
 - 6. Check if there are any records where updated_by is not empty but updated_date is empty.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+      THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM sales
-WHERE updated_date IS NULL AND
-updated_by IS NOT NULL;
+WHERE updated_date IS NULL 
+  AND updated_by IS NOT NULL;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -121,11 +131,12 @@ Here, we are checking the condition where update date field is null and updated 
 - 7. Check if there are any hours worked that are greater than 24 hours.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM timesheet
 GROUP BY employee_id,shift_date
 Having SUM(hours_worked) > 24;
@@ -139,14 +150,15 @@ Here, we are assuming that the timesheet table might get duplicate data sometime
 - 8. Check if non on-call employees are set as on-call.
 ~~~~ sql
 SELECT 
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM timesheet
-WHERE was_on_call IS TRUE AND
-on_call_hour = 0;
+WHERE was_on_call IS FALSE 
+  AND on_call_hour <> 0;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -157,14 +169,15 @@ Here, we are checking whether the was_on_call is true and on-call employees's ho
 - 9. Check if the break is true for employees who have not taken a break at all.
 ~~~~ sql
 SELECT 
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM timesheet
-WHERE has_taken_break IS TRUE AND
-break_hour = 0;
+WHERE has_taken_break IS TRUE 
+AND break_hour = 0;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -175,14 +188,15 @@ Here, we are using timesheet table for the data validation, has_taken_break is T
 - 10. Check if the night shift is not assigned to the employees working on the night shift.
 ~~~~ sql 
 SELECT 
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
 END AS test_result
 FROM timesheet
 WHERE shift_start_time BETWEEN '19:00:00' AND '6:00:00'
-AND shift_type <> 'Night';
+  AND shift_type <> 'Night';
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |

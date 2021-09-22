@@ -6,16 +6,17 @@
 - 1. check if there is any non-manager employee assigned as the manager to other employee.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+      THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM (
-SELECT manager_employee_id FROM employee
-WHERE manager_employee_id IS NOT NULL AND role = 'Manager'
-EXCEPT
-SELECT client_employee_id FROM employee
+  SELECT  DISTINCT client_employee_id FROM employee
+  WHERE role != 'Manager'
+  INTERSECT 
+  SELECT DISTINCT manager_employee_id  FROM employee;
 ) as test_results;
 ~~~~
 | impacted_record_count | test_result |
@@ -27,11 +28,12 @@ Here, we have checked whether any non-manager employee assigned as the manager t
 - 2. check if there is any terminated date before hire date.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0 
+      THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM employee
 WHERE term_date < hire_date;
 ~~~~
@@ -44,11 +46,12 @@ Here, we are checking whether there is any employee whose term date comes before
 - 3. check if first_name contains any non text values 
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM employee 
 WHERE (first_name ~* '[a-z]') is FALSE;
 ~~~~
@@ -61,11 +64,12 @@ Here, first name field of employee table is checked. ~* matches a regular expres
 - 4. check if any  employees are under the age of 16 or not.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0 
+      THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM employee
 WHERE AGE(dob) <'16 years';
 ~~~~
@@ -79,14 +83,16 @@ Here, we are checking the data if there is any employee whose age is less than 1
 - 1. check if there are any records whose shift start time and shift end time is present but attendance is marked as FALSE.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM timesheet
-WHERE (shift_start_time IS NOT NULL AND shift_end_time IS NOT NULL) 
-AND attendence IS FALSE;
+WHERE (shift_start_time IS NOT NULL 
+  AND shift_end_time IS NOT NULL) 
+  AND attendence IS FALSE;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -97,15 +103,17 @@ Here, we have simply checked the shift start time and shift end time whether the
 - 2. check if there is any employee who have taken more break than hours worked on a specific day.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM(
-SELECT count(*) FROM timesheet
-WHERE break_hour>hours_worked
-GROUP BY employee_id,shift_date
+ SELECT 
+   count(*) 
+ FROM timesheet
+ WHERE break_hour>hours_worked
 ) as test_result;
 ~~~~
 | impacted_record_count | test_result |
@@ -117,15 +125,18 @@ Here, We have checked the break hours is greater than hours worked by each emplo
 - 3. check if there is any employee id on timesheet that are not present in the employee table
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM (
-SELECT employee_id FROM timesheet
-EXCEPT
-SELECT client_employee_id FROM employee
+  SELECT employee_id 
+  FROM timesheet
+  EXCEPT
+  SELECT client_employee_id
+  FROM employee
 ) as test_results;
 ~~~~
 | impacted_record_count | test_result |
@@ -136,17 +147,17 @@ Here, the employee_id is checked in the employee table whether all employee_id a
 
 - 4. check if there is any employee who left the company is recorded in timesheet 
 ~~~~ sql
-SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
-FROM (
-SELECT client_employee_id FROM employee  WHERE is_active IS FALSE
-EXCEPT
-SELECT employee_id FROM timesheet
-) as test_results;
+SELECT 
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
+FROM timesheet t
+JOIN employee e 
+ON t.employee_id = e.client_employee_id
+WHERE e.term_date > t.shift_date ;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -157,11 +168,12 @@ SELECT employee_id FROM timesheet
 - 1. check if there is any record in product whose values is in 0 or negative.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM product
 WHERE weight_per_piece <= 0;
 ~~~~
@@ -174,30 +186,34 @@ Here, the weight_per_piece is checked using conditional opeartor whether there i
 - 2. check if there is any records whose Tax percent is not 13.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM product
-WHERE tax_percent != 13;
+WHERE tax_percent < 0 
+  AND tax_percent >100;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
 | 0 | passed |
 
-Here, the tax percent is simply checked whether it is 13 or not. It must be 13 as government makes the rules abou tax and may change according to the law.
-
+Here, the tax percent is simply checked whether it is less than 0 or greater than 100.
 - 3. check if there is any missing prices of a product.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_status
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_status
 FROM product
-WHERE mrp IS  NULL AND price IS  NULL OR pieces_per_case IS  NULL;
+WHERE mrp IS  NULL 
+  AND price IS  NULL 
+  OR pieces_per_case IS NULL;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -208,11 +224,12 @@ Here, OR condition is used in different statement while checking different field
 - 4. check if there is any records whose billing date preceds the products created date.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM product p
 JOIN sales s
 ON p.product_id = s.product_id
@@ -229,16 +246,20 @@ Here, there is the fault in the system as product is first added then it is sold
 - 1. check whether the net bill amount is correct or not
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
-FROM(SELECT
-CASE  WHEN (((price*qty)::NUMERIC(8,3) + tax_amt::NUMERIC(8,3))) = (net_bill_amt::NUMERIC(8,3)) THEN 'YES'
-ELSE 'NO'
-END as test_result
-FROM sales) as result;
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
+FROM(
+  SELECT
+   CASE  
+     WHEN (((price*qty)::NUMERIC(8,3) + tax_amt::NUMERIC(8,3))) != (net_bill_amt::NUMERIC(8,3))
+      THEN 'YES'
+     ELSE 'NO'
+   END as test_result
+  FROM sales) as result;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -249,16 +270,19 @@ Here, all the columns are changed to same precision for comparing and formula is
 - 2. check if there is any records in the sales table made by same customer on same update timestamp and of same product.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM(
-SELECT count(*) FROM sales s
-JOIN product p using(product_id)
-GROUP BY s.customer_id,s.product_id, s.created_date
-) as result;
+  SELECT count(*) 
+  FROM sales s
+  JOIN product p 
+  USING(product_id)
+  GROUP BY s.customer_id,s.product_id, s.created_date
+  ) as result;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -269,16 +293,18 @@ Here, we assume that there is a duplicate data in sales table as the customer bu
 - 3. check for the entries in the sales tables which doesnot have either customer id or product id or both.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM
 sales 
-WHERE (customer_id IS  NULL AND product_id IS NULL)
-OR customer_id IS  NULL
-OR product_id IS  NULL;
+WHERE (customer_id IS  NULL 
+        AND product_id IS NULL)
+  OR customer_id IS  NULL
+  OR product_id IS  NULL;
 ~~~~
 | impacted_record_count | test_result |
 | -- | -- |
@@ -289,11 +315,12 @@ Here, we have checked each colum is either null or not and combination of both( 
 - 4. check if there is any bill date that precds todays date.
 ~~~~ sql
 SELECT
-COUNT(*) AS impacted_record_count,
-CASE
-WHEN COUNT(*) > 0 THEN 'failed'
-ELSE 'passed'
-END AS test_result
+  COUNT(*) AS impacted_record_count,
+  CASE
+    WHEN COUNT(*) > 0
+     THEN 'failed'
+    ELSE 'passed'
+  END AS test_result
 FROM sales
 WHERE bill_date > NOW();
 ~~~~
